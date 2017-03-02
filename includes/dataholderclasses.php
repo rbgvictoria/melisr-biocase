@@ -90,6 +90,7 @@ class Unit {
     var $DateLastEdited;
 
     // Gathering
+    var $GatheringAgentsText = NULL;
     var $AltitudeIsQuantitative = NULL;
     var $AltitudeLowerValue = NULL;
     var $AltitudeUpperValue = NULL;
@@ -129,11 +130,12 @@ class Unit {
     var $VerbatimSRS = NULL;
 
     // Nomenclatural Type Designation
-    var $TypeStatus = NULL;
+    var $TypeStatusName = NULL;
     var $DoubtfulFlag = NULL;
     var $TypifiedName = NULL;
     var $TypeStatusVerifier = NULL;
     var $TypeStatusVerificationDate = NULL;
+    var $TypeStatus = NULL;
     var $NomenclaturalTypeDesignationNotes = NULL;
     
     var $AcquiredFrom = NULL;
@@ -141,6 +143,8 @@ class Unit {
     var $Island = NULL;
     var $IslandGroup = NULL;
     var $WaterBody = NULL;
+    
+    var $dwc_establishmentMeans = NULL;
 }
 
 class SiteMeasurementOrFact {
@@ -187,6 +191,41 @@ class Sequence {
     var $URI = NULL;
     var $SequencingAgent = NULL;
     var $Length = NULL;
+}
+
+class DwcTaxon {
+    var $taxonID = NULL;
+    var $scientificNameID = NULL;
+    var $acceptedNameUsageID = NULL;
+    var $parentNameUsageID = NULL;
+    var $originalNameUsageID = NULL;
+    var $nameAccordingToID = NULL;
+    var $namePublishedInID = NULL;
+    var $taxonConceptID = NULL;
+    var $scientificName = NULL;
+    var $acceptedNameUsage = NULL;
+    var $parentNameUsage = NULL;
+    var $nameAccordingTo = NULL;
+    var $namePublishedIn = NULL;
+    var $namePublishedInYear = NULL;
+    var $higherClassification = NULL;
+    var $kingdom = NULL;
+    var $phylum = NULL;
+    var $class = NULL;
+    var $order = NULL;
+    var $family = NULL;
+    var $genus = NULL;
+    var $subgenus = NULL;
+    var $specificEpithet = NULL;
+    var $infraSpecificEpithet = NULL;
+    var $taxonRank = NULL;
+    var $verbatimTaxonRank = NULL;
+    var $scientificNameAuthorship = NULL;
+    var $vernacularName = NULL;
+    var $nomenclaturalCode = NULL;
+    var $taxonomicStatus = NULL;
+    var $nomenclaturalStatus = NULL;
+    var $taxonRemarks = NULL;
 }
 
 ?>

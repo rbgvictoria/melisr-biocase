@@ -37,7 +37,8 @@ class BioCASeUnit {
               ld.Text1 AS IBRARegion, NationalParkName AS IBRASubregion, ld.Text3 AS MapReference,
               ld.Island, ld.IslandGroup, ld.WaterBody,
               gc.GeoRefVerificationStatus, gc.GeoRefRemarks, gc.GeoRefDetDate, oi.Identifier AS AcquiredFrom, gc.Text1 AS GeoreferenceSources,
-              count(dna.DNASequenceID) AS DNASequences
+              count(dna.DNASequenceID) AS DNASequences,
+              co.Description AS TypeStatus
             FROM collectionobject co
             JOIN collectingevent ce ON co.CollectingEventID=ce.CollectingEventID
             LEFT JOIN locality l ON ce.LocalityID=l.LocalityID
@@ -127,13 +128,61 @@ class BioCASeUnit {
         // Herbarium unit
         /* This will be done when Loans or Exchange are updated*/
         
+        // Collector string
+        $this->Unit->GatheringAgentsText = $this->recordedBy($this->Init->CollectingEventID);
+        
         // Nomenclatural Type Designation
+        $this->Unit->TypeStatus = $this->Init->TypeStatus;
         $typification = $this->getNomenclaturalTypeDesignation();
-        list($this->Unit->TypeStatus, $this->Unit->DoubtfulFlag, $this->Unit->TypifiedName, $this->Unit->TypeStatusVerifier,
+        list($this->Unit->TypeStatusName, $this->Unit->DoubtfulFlag, $this->Unit->TypifiedName, $this->Unit->TypeStatusVerifier,
                 $this->Unit->TypeStatusVerificationDate, $this->Unit->NomenclaturalTypeDesignationNotes) = array_values($typification);
         
-        // DNA Sequences
+        $this->Unit->dwc_establishmentMeans = $this->establishmentMeans($this->Init->NaturalOccurrence, $this->Init->CultivatedOccurrence);
         
+    }
+    
+    /**
+     * establishmentMeans
+     * 
+     * Maps abcd:NaturalOccurrence and abcd:CultivatedOccurrence to dwc:establishmentMeans.
+     * 
+     * @param string $naturalOccurrence
+     * @param string $cultivatedOccurrence
+     * @return string
+     */
+    private function establishmentMeans($naturalOccurrence, $cultivatedOccurrence) {
+        $nat = strtolower($naturalOccurrence);
+        $cult = strtolower($cultivatedOccurrence);
+        
+        $est = NULL;
+        
+        $conf = json_decode(file_get_contents('config/mapping_establishmentMeans.json'));
+        foreach ($conf as $item) {
+            $mapping = (array) $item;
+            if (($mapping['abcd:NaturalOccurrence'] == $nat || (!$mapping['abcd:NaturalOccurrence'] && !$nat)) && 
+                    ($mapping['abcd:CultivatedOccurrence'] == $cult || (!$mapping['abcd:CultivatedOccurrence'] && !$cult))) {
+                $est = $mapping['dwc:establishmentMeans'];
+            }
+        }
+        return $est;
+    }
+    
+    private function recordedBy($ceID) {
+        $select = "SELECT GROUP_CONCAT(IF(!isnull(a.FirstName), CONCAT(a.LastName, ', ', 
+                a.FirstName), a.LastName) ORDER BY c.OrderNumber SEPARATOR '; ') as recordedBy
+            FROM collector c
+            JOIN agent a ON c.AgentID=a.AgentID
+            WHERE c.CollectingEventID=$ceID AND c.IsPrimary=true
+            GROUP BY c.CollectingEventID";
+        $query = $this->db->query($select);
+        $result = $query->fetchAll(5);
+        if ($result) {
+            $row = $result[0];
+            return $row->recordedBy;
+        }
+        else {
+            return NULL;
+        }
     }
     
     private function DateLastEdited() {
@@ -269,10 +318,15 @@ class BioCASeUnit {
                     $stmt2 = $this->db->prepare($select);
                     $stmt2->execute();
                     if ($row2 = $stmt2->fetch(PDO::FETCH_OBJ)) {
-                        $qualifierrank = ucfirst($row2->Rank);
+                        $qualifierrank = strtolower($row2->Rank);
                     }
                 }
-                switch ($row->QualifierRank) {
+                
+                if ($this->Unit->UnitID == '2363300A') {
+                    echo $qualifierrank . "\n";
+                }
+                
+                switch ($qualifierrank) {
                     case 'subspecies':
                     case 'variety':
                     case 'subvariety':
@@ -289,6 +343,9 @@ class BioCASeUnit {
                         $identification->IdentificationQualifierInsertionPoint = 1;
                         break;
                 }
+            }
+            if ($this->Unit->UnitID == '2363300A') {
+                echo $identification->IdentificationQualifierInsertionPoint . "\n";
             }
             $identification->NameAddendum = $this->getNameAddendum($row->Addendum);
             
@@ -929,7 +986,7 @@ class BioCASeUnit {
     
     private function getNomenclaturalTypeDesignation() {
         $typification = array(
-            'TypeStatus' => NULL,
+            'TypeStatusName' => NULL,
             'DoubtfulFlag' => NULL,
             'TypifiedName' => NULL,
             'TypeStatusVerifier' => NULL,
@@ -944,7 +1001,7 @@ class BioCASeUnit {
         $stmt = $this->db->prepare($select);
         $stmt->execute();
         if ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
-            $typification['TypeStatus'] = ($row->TypeStatusName == 'Paraneotype') 
+            $typification['TypeStatusName'] = ($row->TypeStatusName == 'Paraneotype') 
                 ? 'syntype' : strtolower($row->TypeStatusName);
             $typification['DoubtfulFlag'] = str_replace('le', 'ly', $row->SubSpQualifier);
             $typifiedname = $this->getScientificName($row->TaxonID);

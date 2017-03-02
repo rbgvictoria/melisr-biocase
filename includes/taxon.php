@@ -6,6 +6,7 @@ class Taxon {
     var $CurrentTaxon;
     var $Taxon;
     var $HigherTaxa;
+    var $DwcTaxon;
     var $TaxonName;
     
     public function __construct($db, $taxonid) {
@@ -16,6 +17,7 @@ class Taxon {
     
     private function init() {
         $select = "SELECT t.TaxonID, td.Name AS Rank, t.RankID, t.NodeNumber, t.HighestChildNodeNumber, t.Name, t.FullName, t.Author,
+            UnitName3, UnitName4,
             t.UsfwsCode AS HybridType, IF(t.Name LIKE '% %' AND (isnull(UsfwsCode) OR UsfwsCode=''), 1, NULL) AS JunkName
             FROM taxon t
             JOIN taxontreedefitem td ON t.TaxonTreeDefItemID=td.TaxonTreeDefItemID
@@ -51,19 +53,51 @@ class Taxon {
         }
     }
     
+    public function dwcTaxon() {
+        $taxon = new DwcTaxon();
+        $taxon->taxonID = $this->taxonid;
+        $taxon->taxonRank = $this->CurrentTaxon['Rank'];
+        $taxon->scientificName = $this->CurrentTaxon['FullName'];
+        $taxon->scientificNameAuthorship = $this->CurrentTaxon['Author'];
+        $taxon->kingdom = isset($this->Taxon['kingdom']) ? $this->Taxon['kingdom']['Name'] : NULL;
+        $taxon->phylum = isset($this->Taxon['division']) ? $this->Taxon['division']['Name'] : NULL;
+        $taxon->class = isset($this->Taxon['class']) ? $this->Taxon['class']['Name'] : NULL;
+        $taxon->order = isset($this->Taxon['order']) ? $this->Taxon['order']['Name'] : NULL;
+        $taxon->family = isset($this->Taxon['family']) ? $this->Taxon['family']['Name'] : NULL;
+        $taxon->genus = isset($this->Taxon['genus']) ? $this->Taxon['genus']['Name'] : NULL;
+        $taxon->specificEpithet = isset($this->Taxon['species']) ? $this->Taxon['species']['Name'] : NULL;
+        if (isset($this->taxon['subspecies'])) {
+            $taxon->infraSpecificEpithet = $this->Taxon['subspecies']['Name'];
+        }
+        if (isset($this->taxon['variety'])) {
+            $taxon->infraSpecificEpithet = $this->Taxon['variety']['Name'];
+        }
+        if (isset($this->taxon['subvariety'])) {
+            $taxon->infraSpecificEpithet = $this->Taxon['subvariety']['Name'];
+        }
+        if (isset($this->taxon['forma'])) {
+            $taxon->infraSpecificEpithet = $this->Taxon['forma']['Name'];
+        }
+        if (isset($this->taxon['subforma'])) {
+            $taxon->infraSpecificEpithet = $this->Taxon['subforma']['Name'];
+        }
+        $taxon->nomenclaturalCode = 'ICBN';
+        return $taxon;
+    }
+    
     private function FullScientificNameString() {
         switch ($this->CurrentTaxon['RankID']) {
             case 110: // suborder
-                $this->TaxonName->FullScientificNameString = $this->Taxon['Order']['Name'] . ' subord. ' . $this->CurrentTaxon['Name'];
+                $this->TaxonName->FullScientificNameString = $this->Taxon['order']['Name'] . ' subord. ' . $this->CurrentTaxon['Name'];
                 break;
             
             case 150: // subfamily
-                $this->TaxonName->FullScientificNameString = $this->Taxon['Family']['Name'] . ' subfam. ' . $this->CurrentTaxon['Name'];
+                $this->TaxonName->FullScientificNameString = $this->Taxon['family']['Name'] . ' subfam. ' . $this->CurrentTaxon['Name'];
                 $this->TaxonName->FullScientificNameString .= ($this->CurrentTaxon['Author']) ? ' ' . $this->CurrentTaxon['Author'] : '';
                 break;
             
             case 160: // tribe
-                $this->TaxonName->FullScientificNameString = $this->Taxon['Family']['Name'] . ' trib. ' . $this->CurrentTaxon['Name'];
+                $this->TaxonName->FullScientificNameString = $this->Taxon['family']['Name'] . ' trib. ' . $this->CurrentTaxon['Name'];
                 $this->TaxonName->FullScientificNameString .= ($this->CurrentTaxon['Author']) ? ' ' . $this->CurrentTaxon['Author'] : '';
                 break;
             

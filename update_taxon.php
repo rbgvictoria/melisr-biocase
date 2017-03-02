@@ -16,6 +16,10 @@ while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
     
     $taxon->HigherTaxa();
     $load->load('highertaxon', $taxon->HigherTaxa);
+    
+    $dwcTaxon = $taxon->dwcTaxon();
+    $load->load('dwc_taxon', $dwcTaxon, TRUE);
+    
 };
 
 ?>

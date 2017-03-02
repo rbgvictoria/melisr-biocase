@@ -33,6 +33,13 @@ class BioCASeLoad {
             'prefix' => 'abcd'
 
         );
+        $this->config['dwc_taxon'] = (object) array(
+            'tablename' => 'taxon',
+            'type' => 'delete and insert',
+            'skipprimary' => FALSE,
+            'prefix' => 'dwc'
+
+        );
         $this->config['collector'] = (object) array(
             'tablename' => 'collector',
             'type' => 'delete and insert',
@@ -115,9 +122,10 @@ class BioCASeLoad {
                 array_shift ($fields);
             
             $values = array();
-            foreach ($fields as $field)
+            foreach ($fields as $index => $field) {
+                $fields[$index] = '`' . $field . '`';
                 $values[] = '?';
-            
+            }
             $fields = implode(',', $fields);
             $values = implode(',', $values);
             

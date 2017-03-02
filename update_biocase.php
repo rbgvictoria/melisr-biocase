@@ -109,8 +109,10 @@ class UpdateBioCase {
             JOIN preparation p ON co.CollectionObjectID=p.CollectionObjectID
             JOIN collectingevent ce ON co.CollectingEventID=ce.CollectingEventID
             JOIN locality l ON ce.LocalityID=l.LocalityID
+            LEFT JOIN localitydetail ld ON l.LocalityID=ld.LocalityID
+            LEFT JOIN geocoorddetail gcd ON l.LocalityID=gcd.LocalityID
             WHERE co.CollectionMemberID=4 AND p.PrepTypeID IN (1, 2, 3, 4, 6, 7, 12, 13)
-              AND (l.TimestampModified>='$this->starttime')
+              AND (l.TimestampModified>='$this->starttime' OR ld.TimestampModified>='$this->starttime' OR gcd.TimestampModified>='$this->starttime')
             GROUP BY co.CollectionObjectID";
         }
         else {

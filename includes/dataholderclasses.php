@@ -145,6 +145,8 @@ class Unit {
     var $WaterBody = NULL;
     
     var $dwc_establishmentMeans = NULL;
+    var $dwc_eventRemarks = NULL;
+    var $bushBlitzExpedition = NULL;
 }
 
 class SiteMeasurementOrFact {

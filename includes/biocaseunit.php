@@ -36,9 +36,9 @@ class BioCASeUnit {
               ld.StartDepth, ld.EndDepth, ld.Township AS NearNamedPlace, ld.TownshipDirection AS NearNamedPlaceRelationTo, 
               ld.Text1 AS IBRARegion, NationalParkName AS IBRASubregion, ld.Text3 AS MapReference,
               ld.Island, ld.IslandGroup, ld.WaterBody,
-              gc.GeoRefVerificationStatus, gc.GeoRefRemarks, gc.GeoRefDetDate, oi.Identifier AS AcquiredFrom, gc.Text1 AS GeoreferenceSources,
+              gc.GeoRefVerificationStatus, gc.GeoRefRemarks, gc.GeoRefDetDate, NULL AS AcquiredFrom, gc.Text1 AS GeoreferenceSources,
               count(dna.DNASequenceID) AS DNASequences,
-              co.Description AS TypeStatus
+              co.Description AS TypeStatus, ct.CollectingTripName
             FROM collectionobject co
             JOIN collectingevent ce ON co.CollectingEventID=ce.CollectingEventID
             LEFT JOIN locality l ON ce.LocalityID=l.LocalityID
@@ -46,10 +46,12 @@ class BioCASeUnit {
             LEFT JOIN localitydetail ld ON l.LocalityID=ld.LocalityID
             LEFT JOIN geocoorddetail gc ON l.LocalityID=gc.LocalityID
             LEFT JOIN collectingeventattribute cea ON ce.CollectingEventAttributeID=cea.CollectingEventAttributeID
-            LEFT JOIN otheridentifier oi ON co.CollectionObjectID=oi.CollectionObjectID
+            -- LEFT JOIN otheridentifier oi ON co.CollectionObjectID=oi.CollectionObjectID
             LEFT JOIN dnasequence dna ON co.CollectionObjectID=dna.CollectionObjectID
+            LEFT JOIN collectingtrip ct ON ce.CollectingTripID=ct.CollectingTripID
             WHERE co.CollectionObjectID=$this->collectionobjectid
-            GROUP BY co.CollectionObjectID";
+            GROUP BY co.CollectionObjectID, coa.CollectionObjectAttributeID, ce.CollectingEventID, cea.CollectingEventAttributeID,
+              l.LocalityID, ld.LocalityDetailID, gc.GeoCoordDetailID -- , oi.OtherIdentifierID";
         
         $stmt = $this->db->prepare($select);
         $stmt->execute();
@@ -87,6 +89,9 @@ class BioCASeUnit {
         $this->Unit->GatheringIsoDateTimeBegin = $this->getIsoDate($this->Init->StartDate, $this->Init->StartDatePrecision);
         $this->Unit->GatheringIsoDateTimeEnd = $this->getIsoDate($this->Init->EndDate, $this->Init->EndDatePrecision);
         $this->Unit->GatheringDateText = $this->Init->VerbatimCollectingDate;
+        $this->Unit->dwc_eventRemarks = $this->Init->CollectingTripName;
+        $this->Unit->bushBlitzExpedition = (substr($this->Init->CollectingTripName, 0, strlen('Bush Blitz')) == 'Bush Blitz') ?
+                $this->Init->CollectingTripName : null;
         $this->Unit->LocalityText = $this->Init->LocalityName;
         $this->Unit->NearNamedPlace = $this->Init->NearNamedPlace;
         $this->Unit->NearNamedPlaceRelationTo = $this->Init->NearNamedPlaceRelationTo;

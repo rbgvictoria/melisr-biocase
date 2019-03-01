@@ -168,12 +168,15 @@ class UpdateBioCase {
             $load = new BioCASeLoad($this->db, $row->TaxonID);
 
             $taxon->HigherTaxa();
-
-            if ($taxon->HigherTaxa) 
+            if ($taxon->HigherTaxa) {
                 $load->load('highertaxon', $taxon->HigherTaxa);
+            }
 
             $taxon->TaxonName();
             $load->load('taxonname', $taxon->TaxonName);
+
+            $dwcTaxon = $taxon->dwcTaxon();
+            $load->load('dwc_taxon', $dwcTaxon, TRUE);
         }
     }
     

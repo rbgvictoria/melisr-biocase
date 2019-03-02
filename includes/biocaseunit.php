@@ -214,10 +214,10 @@ class BioCASeUnit {
             if ($row->taxon_modified && $row->taxon_modified > $time) $time = $row->taxon_modified;
             if ($row->loan_modified && $row->loan_modified > $time) $time = $row->loan_modified;
             if ($row->gift_modified && $row->gift_modified > $time) $time = $row->gift_modified;
-            return $time;
+            return $time ?: null;
         }
         else {
-            return FALSE;
+            return null;
         }
     }
     
